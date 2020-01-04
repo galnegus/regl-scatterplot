@@ -1,6 +1,7 @@
 /* eslint no-console: 0 */
 
 import createScatterplot from '../src';
+import gen from '../src/winglets/dataGen';
 
 const canvas = document.querySelector('#canvas');
 const numPointsEl = document.querySelector('#num-points');
@@ -14,9 +15,9 @@ const resetEl = document.querySelector('#reset');
 let { width, height } = canvas.getBoundingClientRect();
 
 let points = [];
-let numPoints = 100000;
-let pointSize = 2;
-let opacity = 0.33;
+let numPoints = 100;
+let pointSize = 5;
+let opacity = 0.9;
 let selection = [];
 
 const lassoMinDelay = 10;
@@ -79,20 +80,39 @@ const resizeHandler = () => {
 
 window.addEventListener('resize', resizeHandler);
 
-const generatePoints = num =>
-  new Array(num).fill().map(() => [
-    -1 + Math.random() * 2, // x
-    -1 + Math.random() * 2, // y
-    Math.round(Math.random()), // category
-    Math.random() // value
-  ]);
+const generatePoints = (num, category) => {
+  const sigma = Math.random() / 3 + 0.1;
+  const max = 1 - sigma * 2 - 0.2; // want x, y mean in interval (-max, max) to avoid points outside of canvas boundary.
+
+  return gen({
+    x: Math.random() * max * 2 - max,
+    y: Math.random() * max * 2 - max,
+    sigma,
+    angle: Math.random() * Math.PI,
+    amplitude: Math.random(),
+    n: num,
+    category
+  });
+};
+
+/* new Array(num).fill().map(() => [
+  -1 + Math.random() * 2, // x
+  -1 + Math.random() * 2, // y
+  Math.round(Math.random()), // category
+  Math.random() // value
+]); */
 
 const setNumPoint = newNumPoints => {
   numPoints = newNumPoints;
   numPointsEl.value = numPoints;
   numPointsValEl.innerHTML = numPoints;
-  points = generatePoints(numPoints);
+  points = new Array(2)
+    .fill()
+    .map((_, i) => generatePoints(numPoints, i))
+    .reduce((acc, curr) => acc.concat(curr), []);
   scatterplot.draw(points);
+
+  // const winglets = createWinglets({ points });
 };
 
 const numPointsInputHandler = event => {
@@ -134,12 +154,22 @@ const resetClickHandler = () => {
 
 resetEl.addEventListener('click', resetClickHandler);
 
+// http://colorbrewer2.org/?type=qualitative&scheme=Set3&n=10
 const colorsCat = [
-  ['#3a78aa', '#008dff', '#008dff'],
-  ['#aa3a99', '#ff00da', '#ff00da']
+  '#fccde5',
+  '#8dd3c7',
+  '#ffffb3',
+  '#bebada',
+  '#fb8072',
+  '#80b1d3',
+  '#fdb462',
+  '#b3de69',
+  '#d9d9d9',
+  '#bc80bd'
 ];
 scatterplot.set({ colorBy: 'category', colors: colorsCat });
 
+/*
 const colorsScale = [
   '#002072',
   '#162b79',
@@ -162,7 +192,8 @@ const colorsScale = [
   '#ddf7df',
   '#ffffe0'
 ];
-scatterplot.set({ colorBy: 'value', colors: colorsScale });
+*/
+// scatterplot.set({ colorBy: 'value', colors: colorsScale });
 
 setPointSize(pointSize);
 setOpacity(opacity);

@@ -20,3 +20,5 @@ node_modules/*
 
 docs
 stats.html
+
+*.sublime-workspace

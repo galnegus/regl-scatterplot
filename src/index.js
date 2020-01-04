@@ -12,6 +12,9 @@ import BG_VS from './bg.vs';
 import POINT_FS from './point.fs';
 import POINT_VS from './point.vs';
 
+// !! WINGLETS !!
+import Winglets from './winglets';
+
 import {
   COLOR_ACTIVE_IDX,
   COLOR_BG_IDX,
@@ -133,6 +136,9 @@ const createScatterplot = ({
 
   let hoveredPoint;
   let isMouseInCanvas = false;
+
+  // !! WINGLETS !!
+  let winglets = null;
 
   // Get a copy of the current mouse position
   const getMousePos = () => mousePosition.slice();
@@ -412,6 +418,9 @@ const createScatterplot = ({
     }
     colors = tmp;
 
+    // !! WINGLETS !!
+    winglets.setColors(colors);
+
     try {
       colorTex = createColorTexture();
     } catch (e) {
@@ -688,6 +697,9 @@ const createScatterplot = ({
     searchIndex = new KDBush(newPoints, p => p[0], p => p[1], 16);
 
     isInit = true;
+
+    // !! WINGLETS !!
+    winglets.setPoints(newPoints);
   };
 
   const draw = (newPoints, showRecticleOnce) => {
@@ -714,6 +726,9 @@ const createScatterplot = ({
     if (selection.length) drawSelectedPoint();
 
     lasso.draw();
+
+    // !! WINGLETS !!
+    winglets.draw(projection, model, camera.view);
 
     // Publish camera change
     if (isViewChanged) pubSub.publish('view', camera.view);
@@ -917,6 +932,9 @@ const createScatterplot = ({
       is2d: true
     });
     scroll = createScroll(canvas);
+
+    // !! WINGLETS !!
+    winglets = new Winglets({ regl });
 
     // Event listeners
     scroll.on('scroll', () => {
