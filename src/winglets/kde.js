@@ -42,18 +42,12 @@ function applyBandwidth(x, bandwidth) {
   return [x[0] / bandwidth[0], x[1] / bandwidth[1]];
 }
 
-export default function kde(
-  data,
-  { xMin = -1, xMax = 1, yMin = -1, yMax = 1, N }
-) {
-  // grid size is N x N, N >= 2
+export default function kde(data, { xMin, xMax, yMin, yMax }, N) { // grid size is N x N, N >= 2
 
   // TODO, GPGPU
   // http://www.vizitsolutions.com/portfolio/webgl/gpgpu/
 
-  const grid = Array(N)
-    .fill()
-    .map(() => Array(N).fill());
+  const grid = Array(N).fill().map(() => Array(N).fill());
 
   const cellWidth = (xMax - xMin) / (N - 1);
   const cellHeight = (yMax - yMin) / (N - 1);
@@ -67,18 +61,15 @@ export default function kde(
 
   const bandwidth = getBandwidth(data);
 
+  // NOTE: Grid uses indicing Grid[y][x] (y first) because of 'marchingsquares'
   for (let j = 0; j < N; ++j) {
     for (let i = 0; i < N; ++i) {
-      grid[j][i] =
-        data.reduce(
-          (sum, d) =>
-            sum +
-            gaussKernel(applyBandwidth(diff([xPos[i], yPos[j]], d), bandwidth)),
-          0
-        ) /
-        (data.length * bandwidth[0] * bandwidth[1]);
+      grid[j][i] = data
+        .reduce((sum, d) => sum +
+          gaussKernel(applyBandwidth(diff([xPos[i], yPos[j]], d), bandwidth)),
+        0) / (data.length * bandwidth[0] * bandwidth[1]);
 
-      // this line could be useful for debugging, but should not be used otherwise
+      // this line could be useful for debugging (printing grid with console.table(grid)), but should not be used otherwise
       // if (grid[j][i] < 0.1) grid[j][i] = 0;
     }
   }

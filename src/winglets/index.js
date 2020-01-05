@@ -49,69 +49,119 @@ function darkenColor([r, g, b, a], k) {
   return [r * k, g * k, b * k, a];
 }
 
+function getBBox(points, margin) {
+  let xMin = Number.MAX_VALUE;
+  let xMax = Number.MIN_VALUE;
+  let yMin = Number.MAX_VALUE;
+  let yMax = Number.MIN_VALUE;
+
+  for (let i = 0; i < points.length; ++i) {
+    if (points[i][0] < xMin) xMin = points[i][0];
+    if (points[i][0] > xMax) xMax = points[i][0];
+    if (points[i][1] < yMin) yMin = points[i][1];
+    if (points[i][1] > yMax) yMax = points[i][1];
+  }
+
+  return {
+    xMin: xMin - margin,
+    xMax: xMax + margin,
+    yMin: yMin - margin,
+    yMax: yMax + margin
+  };
+}
+
+const defaultOptions = {
+  showWinglets: true,
+  showContours: false,
+  lineWidth: 1,
+  a: 0.01,
+  b: 0.08,
+  n: 1,
+  contourDropoff: 0.05
+};
+
+// either draw or process for now, could be more if needed (for performance)
+const optionActions = {
+  showWinglets: 'draw',
+  showContours: 'draw',
+  lineWidth: 'draw',
+  a: 'process',
+  b: 'process',
+  n: 'process',
+  contourDropoff: 'process'
+};
+
 export default class Winglets {
-  constructor({ regl }) {
+  constructor(regl, options) { // see defaultOptions above for existing options!
     this.regl = regl;
     this.categories = [];
+    this.pointsByCategory = {};
+    this.kdeGridsByCategory = {};
     this.contourLines = {};
     this.wingletLines = {};
     this.colors = defaultColors;
     this.appliedColors = null;
+    this.bbox = null;
+    this.mvp = null;
+
+    this.options = { ...defaultOptions, ...options };
   }
 
-  draw(projection, model, view) {
+  draw(mvp = null) {
+    let realMvp = mvp;
+    if (!mvp && !this.mvp) {
+      console.error('winglets.draw() missing mvp');
+      return;
+    }
+    if (!mvp) realMvp = this.mvp;
+
     this.categories.forEach(category => {
-      /* for (let i = 0; i < this.contourLines[category].length; ++i) {
-        this.contourLines[category][i].draw({ projection, model, view });
-      } */
-
-      this.wingletLines[category].draw({ projection, model, view });
+      if (this.options.showContours) {
+        for (let i = 0; i < this.contourLines[category].length; ++i) {
+          this.contourLines[category][i].draw(realMvp);
+        }
+      }
+      
+      if (this.options.showWinglets)
+        this.wingletLines[category].draw(realMvp);
     });
   }
 
-  processCategory(points, category) {
-    const kdeGrid = kde(points, { N: 100 });
-    const globalReferenceContour = findContour(kdeGrid, points);
+  processPoints(forceKde = true) {
+    this.contourLines = {};
+    this.wingletLines = {};
+    this.categories.forEach(category => {
+      const points = this.pointsByCategory[category];
+      if (forceKde || !this.kdeGridsByCategory[category])
+        this.kdeGridsByCategory[category] = kde(points, this.bbox, 100);
 
-    const centroid = computeCentroid(points);
-    const contours = [];
-    this.contourLines[category] = new Array(contourScales.length)
-      .fill()
-      .map(() => createLine(this.regl, { width: 1, is2d: true }));
-    contourScales.forEach((scale, i) => {
-      const newContour = interpolateContour(
-        globalReferenceContour,
-        centroid,
-        scale
-      );
-      contours.push(newContour);
-      this.contourLines[category][i].setPoints(_flatten(newContour));
+      const globalReferenceContour = findContour(this.kdeGridsByCategory[category], this.bbox, points, this.options);
+
+      const centroid = computeCentroid(points);
+      const contours = [];
+      this.contourLines[category] = new Array(contourScales.length).fill()
+        .map(() => createLine(this.regl, { width: 1, is2d: true }));
+      contourScales.forEach((scale, i) => {
+        const newContour = interpolateContour(globalReferenceContour, centroid, scale);
+        contours.push(newContour);
+        this.contourLines[category][i].setPoints(_flatten(newContour));
+      });
+      
+      this.wingletLines[category] = createWinglets(this.regl, contours, points, this.options);
     });
-    
-    this.wingletLines[category] = createWinglets(this.regl, contours, points, 1);
   }
 
   setPoints(points) {
-    // generate silhouette
     silhouetteIndex(points);
-
+    this.bbox = getBBox(points, 0.1);
+    
     // separate categories
-    const pointsByCategory = _groupBy(points, 2);
-    this.categories = Object.keys(pointsByCategory);
-    this.contourLines = {};
-    this.wingletLines = {};
+    this.pointsByCategory = _groupBy(points, 2);
+    this.categories = Object.keys(this.pointsByCategory);
+    this.kdeGridsByCategory = {};
 
-    this.categories.forEach(category => {
-      this.processCategory(pointsByCategory[category], category);
-    });
-
+    this.processPoints(true); // Very Important
     this.applyColors(true);
-
-    // run kde on each class
-    // const kdeGrids = categories.map((category) => kde(pointsByCategory[category], { N: 100 }));
-
-    // find centroid
-    // interpolate ten contours in, ten contours out
   }
 
   setColors(newColors) {
@@ -123,10 +173,7 @@ export default class Winglets {
   // So if we try to set the colors in setColors, it won't work, as no lines (or points) exist yet.
   // But if colors are changed during runtime, they still need to update, so applyColors!
   applyColors(force = false) {
-    if (
-      !force &&
-      (this.appliedColors === this.colors || this.categories.length === 0)
-    )
+    if (!force && (this.appliedColors === this.colors || this.categories.length === 0))
       return;
 
     this.categories.forEach((category, categoryIndex) => {
@@ -145,9 +192,31 @@ export default class Winglets {
     this.appliedColors = this.colors;
   }
 
-  /*
-  destroy() {
-    // TODO maybe?
+  // see defaultOptions higher up
+  setOptions(options) {
+    this.options = { ...this.options, ...options };
+
+    // this feels really stupid
+    const action = {
+      draw: false,
+      process: false
+    }
+    Object.keys(options).forEach((option) => {
+      action[optionActions[option]] = true;
+    });
+
+    if (action.process) this.processPoints(false);
+    this.draw();
   }
-  */
+
+  // don't know if this is needed, but why the hell not?
+  destroy() {
+    this.categories.forEach(category => {
+      for (let i = 0; i < this.contourLines[category].length; ++i) {
+        this.contourLines[category][i].destroy();
+      }
+      this.wingletLines[category].destroy();
+    });
+  }
+  
 }

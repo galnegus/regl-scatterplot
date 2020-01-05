@@ -3,7 +3,7 @@ import KDBush from 'kdbush';
 import * as Yallist  from 'yallist';
 import nearestNeighbor from './nearestNeighbor';
 
-// in javascript (-1 % 2) === -1, this mod works for negative numbers
+// in javascript (-1 % 2) === -1, this mod works for negative numbers so mod(-1, 2) === 1
 function mod(n, m) {
   return ((n % m) + m) % m;
 }
@@ -14,13 +14,7 @@ function distance([x1, y1], [x2, y2]) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function buildLeftSide(
-  contour,
-  initIndex,
-  initLength,
-  distanceToPoint,
-  results
-) {
+function buildLeftSide(contour, initIndex, initLength, distanceToPoint, results) {
   let length = initLength / 2;
   let currentPoint;
   let currentIndex;
@@ -28,8 +22,7 @@ function buildLeftSide(
   let prevIndex = initIndex;
   let distanceToPrev;
 
-  while (length > 0.001) {
-    // something small
+  while (length > 0.001) { // something small
     currentIndex = mod(prevIndex - 1, contour.length);
     currentPoint = contour[currentIndex];
     distanceToPrev = distance(currentPoint, prevPoint);
@@ -51,13 +44,7 @@ function buildLeftSide(
   }
 }
 
-function buildRightSide(
-  contour,
-  initIndex,
-  initLength,
-  distanceToPoint,
-  results
-) {
+function buildRightSide(contour, initIndex, initLength, distanceToPoint, results) {
   let length = initLength / 2;
   let currentPoint;
   let currentIndex;
@@ -92,14 +79,14 @@ function buildRightSide(
 // were created in makeWinglet, here the widths are set properly so that they are hidden!
 function makeConnections(connectionIndices, width) {
   const widths = [];
-  let wingletLength;
+  let nWingletPoints;
   for (let i = 0; i < connectionIndices.length; i += 2) {
     // first connect start and winglet
     widths.push(0);
 
     // then add widths for the winglet in between start and end
-    wingletLength = (connectionIndices[i+1] - connectionIndices[i] - 2) / 2; // number of points in winglet
-    for (let j = 0; j < wingletLength; ++j) {
+    nWingletPoints = (connectionIndices[i+1] - connectionIndices[i] - 2) / 2; // number of points in winglet
+    for (let j = 0; j < nWingletPoints; ++j) {
       widths.push(width);
     }
     
@@ -110,8 +97,7 @@ function makeConnections(connectionIndices, width) {
   return widths;
 }
 
-// TODO: potential optimization, instead of one line for each point,
-// one line for all of them, either using width or color property to make intermediary lines invisible
+// 
 function makeWinglet(contour, index, point, length, wingletPoints, connectionIndices) {
   const results = new Yallist();
 
@@ -130,21 +116,12 @@ function makeWinglet(contour, index, point, length, wingletPoints, connectionInd
   // make start connection
   const first = results.shift();
   const second = results.shift();
-
-  // todo write: results.unshift(second, first, second, first); when it works
-  results.unshift(second);
-  results.unshift(first);
-  results.unshift(second);
-  results.unshift(first);
+  results.unshift(second, first, second, first);
 
   // make end connection
   const last = results.pop();
   const secondLast = results.pop();
-
-  results.push(secondLast);
-  results.push(last);
-  results.push(secondLast);
-  results.push(last);
+  results.push(secondLast, last, secondLast, last);
 
   const startIndex = wingletPoints.length;
   wingletPoints.push(...results); // yallist is iterable, so spread operator should work
@@ -152,7 +129,15 @@ function makeWinglet(contour, index, point, length, wingletPoints, connectionInd
   connectionIndices.push(startIndex, endIndex);
 }
 
-export default function createWinglets(regl, contours, points, width) {
+// sets the winglet length on the form l(Si) = a + Si^n * b
+// where Si is the silhouette index (should be stored as the point value)
+// which is defined in the interval [0, 1].
+function wingletLength(point, a, b, n) {
+  return a + point[3] ** n * b;
+}
+
+// create the winglets for one category, given a list of contours, the points and the winglets line width
+export default function createWinglets(regl, contours, points, wingletsOptions) {
   const spatialPoints = new Array(contours.length * contours[0].length);
   const nContourPoints = contours[0].length;
 
@@ -166,23 +151,23 @@ export default function createWinglets(regl, contours, points, width) {
     }
   }
 
-  const kdTree = new KDBush(
-    spatialPoints,
-    p => p.position[0],
-    p => p.position[1],
-    64
-  );
+  const kdTree = new KDBush(spatialPoints, p => p.position[0], p => p.position[1], 64);
 
   const wings = points.map(point => nearestNeighbor(kdTree, point));
-  // new Array(points.length).fill().map((_, i) =>
-
   const wingletPoints = [];
   const connectionIndices = [];
 
   for (let i = 0; i < points.length; ++i) {
-    makeWinglet(wings[i].contour, wings[i].index, points[i], 0.05, wingletPoints, connectionIndices);
+    makeWinglet(
+      wings[i].contour,
+      wings[i].index,
+      points[i],
+      wingletLength(points[i], wingletsOptions.a, wingletsOptions.b, wingletsOptions.n),
+      wingletPoints,
+      connectionIndices
+    );
   }
-  const widths = makeConnections(connectionIndices, width);
+  const widths = makeConnections(connectionIndices, wingletsOptions.lineWidth);
 
   return createLine(regl, {
     widths,

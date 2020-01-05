@@ -728,7 +728,7 @@ const createScatterplot = ({
     lasso.draw();
 
     // !! WINGLETS !!
-    winglets.draw(projection, model, camera.view);
+    winglets.draw({ model, view: camera.view, projection });
 
     // Publish camera change
     if (isViewChanged) pubSub.publish('view', camera.view);
@@ -934,7 +934,7 @@ const createScatterplot = ({
     scroll = createScroll(canvas);
 
     // !! WINGLETS !!
-    winglets = new Winglets({ regl });
+    winglets = new Winglets(regl);
 
     // Event listeners
     scroll.on('scroll', () => {
@@ -983,6 +983,9 @@ const createScatterplot = ({
     lasso.destroy();
     scroll.dispose();
     pubSub.clear();
+
+    // !! WINGLETS !!
+    winglets.destroy();
   };
 
   init(canvas);
