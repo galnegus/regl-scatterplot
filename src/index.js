@@ -7,10 +7,10 @@ import { mat4, vec4 } from 'gl-matrix';
 import createLine from 'regl-line';
 import createScroll from 'scroll-speed';
 
-import BG_FS from './bg.fs';
-import BG_VS from './bg.vs';
-import POINT_FS from './point.fs';
-import POINT_VS from './point.vs';
+import BG_FS from './bgFragment.js';
+import BG_VS from './bgVertex.js';
+import POINT_FS from './pointFragment.js';
+import POINT_VS from './pointVertex.js';
 
 // !! WINGLETS !!
 import Winglets from './winglets';
