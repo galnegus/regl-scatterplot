@@ -11,8 +11,8 @@
     "winglets"
   ],
   "license": "MIT",
-  "main": "dist/regl-scatterplot.js",
-  "module": "dist/regl-scatterplot.esm.js",
+  "main": "dist/regl-scatterplot-winglets.js",
+  "module": "src/index.js",
   "files": [
     "src/*",
     "dist/*"
