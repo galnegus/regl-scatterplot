@@ -1,13 +1,14 @@
 {
-  "name": "regl-scatterplot",
-  "version": "0.7.3",
+  "name": "regl-scatterplot-winglets",
+  "version": "0.0.1",
   "description": "WebGL-based 2D Scatterplot in Regl",
-  "author": "Fritz Lekschas",
+  "author": "Tobias Hindersson",
   "keywords": [
     "scatterplot",
     "2d",
     "regl",
-    "webgl"
+    "webgl",
+    "winglets"
   ],
   "license": "MIT",
   "main": "dist/regl-scatterplot.js",
@@ -25,7 +26,7 @@
     "prerelease": "rm -rf dist/*; npm run build; zip -r dist.zip dist",
     "pretest": "npm run lint",
     "start": "webpack-dev-server --config ./webpack.config.js --mode development --open",
-    "test": "rollup -c ./rollup.test.config.js | tape-run --render='tap-spec'",
+    "test": "rollup -c ./rollup.test.config.js | tape-run",
     "watch": "rollup -cw"
   },
   "dependencies": {
@@ -58,12 +59,9 @@
     "babel-plugin-lodash": "^3.3.4",
     "browser-env": "^3.2.5",
     "eslint": "^5.9.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-config-prettier": "^v3.3.0",
     "eslint-plugin-flowtype": "^2.50.3",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^6.1.2",
-    "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-react": "^7.11.1",
     "esm": "^3.0.84",
     "gl": "^4.4.0",
@@ -71,8 +69,6 @@
     "husky": "^1.1.4",
     "lint-staged": "^8.1.0",
     "merge": ">=1.2.1",
-    "prettier": "^1.15.2",
-    "pretty-quick": "^1.8.0",
     "rollup": "^0.67.3",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-commonjs": "^9.2.0",
@@ -89,13 +85,13 @@
     "webpack-tape-run": "0.0.7",
     "zora": "^2.0.1"
   },
-  "homepage": "https://github.com/flekschas/regl-scatterplot",
+  "homepage": "https://github.com/galnegus/regl-scatterplot-winglets",
   "repository": {
     "type": "git",
-    "url": "git://github.com/flekschas/regl-scatterplot.git"
+    "url": "git://github.com/galnegus/regl-scatterplot-winglets.git"
   },
   "bugs": {
-    "url": "https://github.com/flekschas/regl-scatterplot/issues"
+    "url": "https://github.com/galnegus/regl-scatterplot-winglets/issues"
   },
   "optionalDependencies": {
     "win-node-env": "^0.4.0"

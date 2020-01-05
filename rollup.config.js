@@ -23,7 +23,7 @@ const configurator = (file, format, plugins) => ({
   external: ['pub-sub-es', 'regl']
 });
 
-const devConfig = configurator('dist/regl-scatterplot.js', 'umd', [
+const devConfig = configurator('dist/regl-scatterplot-winglets.js', 'umd', [
   resolve(),
   commonjs({ sourceMap: false }),
   babel(),
@@ -31,7 +31,7 @@ const devConfig = configurator('dist/regl-scatterplot.js', 'umd', [
   visualizer()
 ]);
 
-const devConfigEsm = configurator('dist/regl-scatterplot.esm.js', 'es', [
+const devConfigEsm = configurator('dist/regl-scatterplot-winglets.esm.js', 'es', [
   resolve(),
   commonjs({ sourceMap: false }),
   babel(),
@@ -39,14 +39,14 @@ const devConfigEsm = configurator('dist/regl-scatterplot.esm.js', 'es', [
   visualizer()
 ]);
 
-const prodConfig = configurator('dist/regl-scatterplot.min.js', 'umd', [
+const prodConfig = configurator('dist/regl-scatterplot-winglets.min.js', 'umd', [
   resolve(),
   commonjs({ sourceMap: false }),
   babel(),
   terser()
 ]);
 
-const prodConfigEsm = configurator('dist/regl-scatterplot.esm.min.js', 'es', [
+const prodConfigEsm = configurator('dist/regl-scatterplot-winglets.esm.min.js', 'es', [
   resolve(),
   commonjs({ sourceMap: false }),
   babel(),

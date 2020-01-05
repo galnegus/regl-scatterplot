@@ -1,6 +1,6 @@
 import createLine from 'regl-line';
 import KDBush from 'kdbush';
-import * as Yallist  from 'yallist';
+import Yallist from 'yallist';
 import nearestNeighbor from './nearestNeighbor';
 
 // in javascript (-1 % 2) === -1, this mod works for negative numbers so mod(-1, 2) === 1
@@ -89,7 +89,7 @@ function makeConnections(connectionIndices, width) {
     for (let j = 0; j < nWingletPoints; ++j) {
       widths.push(width);
     }
-    
+
     // finally add connection between winglet and end
     widths.push(0);
   }
@@ -97,7 +97,7 @@ function makeConnections(connectionIndices, width) {
   return widths;
 }
 
-// 
+//
 function makeWinglet(contour, index, point, length, wingletPoints, connectionIndices) {
   const results = new Yallist();
 
