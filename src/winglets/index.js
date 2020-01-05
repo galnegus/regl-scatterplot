@@ -1,11 +1,10 @@
 import _groupBy from 'lodash-es/groupBy';
 import _flatten from 'lodash-es/flatten';
 import createLine from 'regl-line';
-import KDBush from 'kdbush';
 import kde from './kde';
 import findContour from './findContour';
-import nearestNeighbor from './nearestNeighbor';
-import makeWinglet from './makeWinglet';
+import createWinglets from './createWinglets';
+import silhouetteIndex from './silhouetteIndex';
 
 const contourScales = [0.1, 0.19, 0.31, 0.47, 0.65, 0.86, 1.1, 1.37, 1.67, 2];
 
@@ -46,7 +45,7 @@ function interpolateContour(globalReferenceContour, [cX, cY], k) {
 }
 
 function darkenColor([r, g, b, a], k) {
-  if (k < 0) throw new Error('k must be positive');
+  if (k > 1) throw new Error('k must be < 1');
   return [r * k, g * k, b * k, a];
 }
 
@@ -66,9 +65,7 @@ export default class Winglets {
         this.contourLines[category][i].draw({ projection, model, view });
       } */
 
-      for (let i = 0; i < this.wingletLines[category].length; ++i) {
-        this.wingletLines[category][i].draw({ projection, model, view });
-      }
+      this.wingletLines[category].draw({ projection, model, view });
     });
   }
 
@@ -90,36 +87,14 @@ export default class Winglets {
       contours.push(newContour);
       this.contourLines[category][i].setPoints(_flatten(newContour));
     });
-
-    const spatialPoints = new Array(contours.length * contourScales.length);
-    const nContourPoints = contours[0].length;
-    for (let i = 0; i < contours.length; ++i) {
-      for (let j = 0; j < contours[i].length; ++j) {
-        spatialPoints[i * nContourPoints + j] = {
-          position: contours[i][j],
-          contour: contours[i],
-          index: j
-        };
-      }
-    }
-
-    const kdTree = new KDBush(
-      spatialPoints,
-      p => p.position[0],
-      p => p.position[1],
-      64
-    );
-    const wings = points.map(point => nearestNeighbor(kdTree, point));
-    this.wingletLines[category] = new Array(points.length).fill().map((_, i) =>
-      createLine(this.regl, {
-        width: 1,
-        is2d: true,
-        points: makeWinglet(wings[i].contour, wings[i].index, points[i], 0.08)
-      })
-    );
+    
+    this.wingletLines[category] = createWinglets(this.regl, contours, points, 1);
   }
 
   setPoints(points) {
+    // generate silhouette
+    silhouetteIndex(points);
+
     // separate categories
     const pointsByCategory = _groupBy(points, 2);
     this.categories = Object.keys(pointsByCategory);
@@ -161,12 +136,10 @@ export default class Winglets {
             darkenColor(defaultColors[categoryIndex], 0.5) || [255, 255, 255, 1]
         });
       }
-      for (let i = 0; i < this.wingletLines[category].length; ++i) {
-        this.wingletLines[category][i].setStyle({
-          color: this.colors[categoryIndex * 4] ||
-            defaultColors[categoryIndex] || [255, 255, 255, 1]
-        });
-      }
+      this.wingletLines[category].setStyle({
+        color: this.colors[categoryIndex * 4] ||
+          defaultColors[categoryIndex] || [255, 255, 255, 1]
+      });
     });
 
     this.appliedColors = this.colors;
