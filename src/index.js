@@ -988,6 +988,10 @@ const createScatterplot = ({
     winglets.destroy();
   };
 
+  const setWingletsOptions = (options) => {
+    winglets.setOptions(options);
+  }
+
   init(canvas);
 
   return {
@@ -1001,7 +1005,8 @@ const createScatterplot = ({
     select,
     set,
     subscribe: pubSub.subscribe,
-    unsubscribe: pubSub.unsubscribe
+    unsubscribe: pubSub.unsubscribe,
+    setWingletsOptions
   };
 };
 
