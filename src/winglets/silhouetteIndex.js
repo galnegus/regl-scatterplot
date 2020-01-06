@@ -18,6 +18,11 @@ export default function silhouetteIndex(points) {
   const nPointsInCategory = getNPointsInCategory(points);
   const categories = Object.keys(nPointsInCategory);
 
+  if (categories.length < 2) {
+    points.forEach((point) => point[3] = 1);
+    return;
+  }
+
   const sumByCategory = {};
   categories.forEach((category) => {
     sumByCategory[category] = new Array(points.length).fill(0);
