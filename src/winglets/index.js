@@ -114,6 +114,7 @@ export default class Winglets {
       return;
     }
     if (!mvp) realMvp = this.mvp;
+    else this.mvp = mvp;
 
     this.categories.forEach(category => {
       if (this.options.showContours) {
@@ -121,7 +122,7 @@ export default class Winglets {
           this.contourLines[category][i].draw(realMvp);
         }
       }
-      
+
       if (this.options.showWinglets)
         this.wingletLines[category].draw(realMvp);
     });
@@ -146,7 +147,7 @@ export default class Winglets {
         contours.push(newContour);
         this.contourLines[category][i].setPoints(_flatten(newContour));
       });
-      
+
       this.wingletLines[category] = createWinglets(this.regl, contours, points, this.options);
     });
   }
@@ -154,7 +155,7 @@ export default class Winglets {
   setPoints(points) {
     silhouetteIndex(points);
     this.bbox = getBBox(points, 0.1);
-    
+
     // separate categories
     this.pointsByCategory = _groupBy(points, 2);
     this.categories = Object.keys(this.pointsByCategory);
@@ -218,5 +219,5 @@ export default class Winglets {
       this.wingletLines[category].destroy();
     });
   }
-  
+
 }
