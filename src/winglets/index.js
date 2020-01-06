@@ -84,7 +84,7 @@ const defaultOptions = {
 const optionActions = {
   showWinglets: 'draw',
   showContours: 'draw',
-  lineWidth: 'draw',
+  lineWidth: 'process',
   a: 'process',
   b: 'process',
   n: 'process',
