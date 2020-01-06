@@ -150,6 +150,7 @@ export default class Winglets {
 
       this.wingletLines[category] = createWinglets(this.regl, contours, points, this.options);
     });
+    this.applyColors(true);
   }
 
   setPoints(points) {
@@ -162,7 +163,6 @@ export default class Winglets {
     this.kdeGridsByCategory = {};
 
     this.processPoints(true); // Very Important
-    this.applyColors(true);
   }
 
   setColors(newColors) {
@@ -177,16 +177,16 @@ export default class Winglets {
     if (!force && (this.appliedColors === this.colors || this.categories.length === 0))
       return;
 
-    this.categories.forEach((category, categoryIndex) => {
+    this.categories.forEach((category) => {
       for (let i = 0; i < this.contourLines[category].length; ++i) {
         this.contourLines[category][i].setStyle({
-          color: darkenColor(this.colors[categoryIndex * 4], 0.5) ||
-            darkenColor(defaultColors[categoryIndex], 0.5) || [255, 255, 255, 1]
+          color: darkenColor(this.colors[category * 4], 0.5) ||
+            darkenColor(defaultColors[category], 0.5) || [255, 255, 255, 1]
         });
       }
       this.wingletLines[category].setStyle({
-        color: this.colors[categoryIndex * 4] ||
-          defaultColors[categoryIndex] || [255, 255, 255, 1]
+        color: this.colors[category * 4] ||
+          defaultColors[category] || [255, 255, 255, 1]
       });
     });
 

@@ -77,7 +77,8 @@ const createScatterplot = ({
   target: initialTarget = DEFAULT_TARGET,
   distance: initialDistance = DEFAULT_DISTANCE,
   rotation: initialRotation = DEFAULT_ROTATION,
-  view: initialView = DEFAULT_VIEW
+  view: initialView = DEFAULT_VIEW,
+  wingletsOptions = undefined
 } = {}) => {
   const pubSub = createPubSub();
   const scratch = new Float32Array(16);
@@ -934,7 +935,7 @@ const createScatterplot = ({
     scroll = createScroll(canvas);
 
     // !! WINGLETS !!
-    winglets = new Winglets(regl);
+    winglets = new Winglets(regl, wingletsOptions);
 
     // Event listeners
     scroll.on('scroll', () => {

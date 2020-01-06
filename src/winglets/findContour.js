@@ -74,7 +74,7 @@ export default function findContour(grid, bbox, points, wingletsOptions) {
   const pointValues = computePointValues(grid, bbox, points).sort(sortBy);
 
   // "Those density values are equidistantly sampled from low to high." -Winglets
-  const minValue = pointValues[Math.floor(pointValues.length * 0.1)];
+  const minValue = pointValues[Math.floor(pointValues.length * 0.01)];
   const maxValue = pointValues[Math.floor(pointValues.length * 0.9)];
   const steps = 20;
   const dist = (maxValue - minValue) / steps;
